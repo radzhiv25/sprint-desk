@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 import { cn } from '@/lib/utils/cn';
+import { motionTransition, springGentle } from '@/lib/motion';
 
 import { Button } from './Button';
 
@@ -94,7 +95,7 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+            transition={motionTransition(shouldReduceMotion, { duration: 0.2 })}
             onClick={() => onCloseRef.current()}
           />
           <motion.div
@@ -106,10 +107,10 @@ export function Modal({
             className={cn(
               'relative z-10 w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-sm',
             )}
-            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+            exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.95, y: 8 }}
+            transition={motionTransition(shouldReduceMotion, springGentle)}
           >
             <div className="flex items-start justify-between gap-4">
               <div>

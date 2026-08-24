@@ -1,16 +1,18 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { motion, type HTMLMotionProps, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils/cn';
 
 export type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  children?: ReactNode;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -44,10 +46,17 @@ export function Button({
   type = 'button',
   ...props
 }: ButtonProps): JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const isDisabled = disabled ?? isLoading;
+
   return (
-    <button
+    <motion.button
       type={type}
-      disabled={disabled ?? isLoading}
+      disabled={isDisabled}
+      whileTap={
+        prefersReducedMotion || isDisabled ? undefined : { scale: 0.97 }
+      }
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium transition-colors cursor-pointer',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
@@ -68,6 +77,6 @@ export function Button({
       )}
       {children}
       {!isLoading && rightIcon}
-    </button>
+    </motion.button>
   );
 }

@@ -1,4 +1,5 @@
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   Bell,
@@ -16,6 +17,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 import { NotificationPanel } from '@/features/notifications/NotificationPanel';
 import { useNotificationsContext } from '@/features/notifications/notificationsContext';
+import { springSnappy } from '@/lib/motion';
 import { cn } from '@/lib/utils/cn';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -47,6 +49,8 @@ function SidebarNavLink({
   collapsed: boolean;
   onNavigate?: () => void;
 }): JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <NavLink
       to={to}
@@ -54,18 +58,32 @@ function SidebarNavLink({
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium',
-          'hover:bg-accent hover:text-accent-foreground',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-          isActive
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground',
-          collapsed && 'justify-center px-2',
+          'relative flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors',
+          collapsed ? 'justify-center px-2' : 'px-3',
+          'hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          isActive ? 'text-foreground' : 'text-muted-foreground hover:bg-muted/50',
         )
       }
     >
-      <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-      {!collapsed ? <span>{label}</span> : null}
+      {({ isActive }) => (
+        <>
+          {isActive ? (
+            <motion.span
+              layoutId="sidebar-nav-indicator"
+              className={cn(
+                'absolute bg-primary',
+                collapsed
+                  ? 'inset-1 rounded-md bg-primary/10'
+                  : 'bottom-1 left-0 top-1 w-0.5 rounded-full',
+              )}
+              transition={prefersReducedMotion ? { duration: 0 } : springSnappy}
+              aria-hidden="true"
+            />
+          ) : null}
+          <Icon className="relative z-[1] h-5 w-5 shrink-0" aria-hidden="true" />
+          {!collapsed ? <span className="relative z-[1]">{label}</span> : null}
+        </>
+      )}
     </NavLink>
   );
 }
@@ -77,6 +95,9 @@ export function Sidebar({ mobileOpen, onMobileOpenChange, isMobile }: SidebarPro
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const logout = useAuthStore((state) => state.logout);
   const notifications = useNotificationsContext();
+  const prefersReducedMotion = useReducedMotion();
+  const prevUnreadRef = useRef(0);
+  const [bellAnimating, setBellAnimating] = useState(false);
 
   const showCollapsed = isMobile ? false : collapsed;
   const isDrawerVisible = isMobile ? mobileOpen : true;
@@ -106,6 +127,13 @@ export function Sidebar({ mobileOpen, onMobileOpenChange, isMobile }: SidebarPro
     isLoading,
   } = notifications;
 
+  useEffect(() => {
+    if (!isPanelOpen && unreadCount > prevUnreadRef.current) {
+      setBellAnimating(true);
+    }
+    prevUnreadRef.current = unreadCount;
+  }, [unreadCount, isPanelOpen]);
+
   return (
     <>
       {isMobile && mobileOpen ? (
@@ -119,7 +147,7 @@ export function Sidebar({ mobileOpen, onMobileOpenChange, isMobile }: SidebarPro
 
       <aside
         className={cn(
-          'z-50 flex h-full shrink-0 flex-col border-r border-border bg-muted/30 transition-[width,transform] duration-200',
+          'z-50 flex h-full shrink-0 flex-col border-r border-border bg-sidebar shadow-sm transition-[width,transform] duration-200',
           isMobile
             ? cn(
                 'fixed inset-y-0 left-0 w-64 shadow-lg',
@@ -136,7 +164,9 @@ export function Sidebar({ mobileOpen, onMobileOpenChange, isMobile }: SidebarPro
           )}
         >
           {!showCollapsed || isMobile ? (
-            <span className="truncate text-sm font-semibold text-foreground">SprintDesk</span>
+            <span className="truncate font-display text-sm font-semibold tracking-display text-foreground">
+              SprintDesk
+            </span>
           ) : (
             <span className="sr-only">SprintDesk</span>
           )}
@@ -195,20 +225,53 @@ export function Sidebar({ mobileOpen, onMobileOpenChange, isMobile }: SidebarPro
               showCollapsed && 'justify-center px-2',
             )}
           >
-            <Bell className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <motion.span
+              className="relative shrink-0"
+              animate={
+                bellAnimating && !prefersReducedMotion
+                  ? {
+                      rotate: [0, -14, 14, -10, 10, -4, 0],
+                      scale: [1, 1.12, 1.08, 1.1, 1],
+                    }
+                  : { rotate: 0, scale: 1 }
+              }
+              transition={{ duration: 0.55, ease: 'easeInOut' }}
+              onAnimationComplete={() => setBellAnimating(false)}
+            >
+              <Bell className="h-5 w-5" aria-hidden="true" />
+              {unreadCount > 0 && showCollapsed ? (
+                <motion.span
+                  className="absolute -right-1 -top-1 flex h-2 w-2 rounded-full bg-primary"
+                  animate={
+                    bellAnimating && !prefersReducedMotion
+                      ? { scale: [1, 1.6, 1], opacity: [1, 0.7, 1] }
+                      : { scale: 1, opacity: 1 }
+                  }
+                  transition={{ duration: 0.55 }}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </motion.span>
             {!showCollapsed ? <span>Notifications</span> : null}
             {unreadCount > 0 ? (
-              <span
+              <motion.span
                 className={cn(
-                  'flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground',
+                  'flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] font-semibold text-primary-foreground',
                   showCollapsed
                     ? 'absolute -right-0.5 -top-0.5'
                     : 'ml-auto',
                 )}
+                initial={prefersReducedMotion ? false : { scale: 0.8 }}
+                animate={
+                  bellAnimating && !prefersReducedMotion
+                    ? { scale: [1, 1.2, 1] }
+                    : { scale: 1 }
+                }
+                transition={{ duration: 0.4 }}
                 aria-hidden="true"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
+              </motion.span>
             ) : null}
           </button>
 

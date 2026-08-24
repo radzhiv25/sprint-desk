@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, type PanInfo } from 'framer-motion';
 
 import { cn } from '@/lib/utils/cn';
+import { motionTransition, springGentle } from '@/lib/motion';
 
 export type ToastVariant = 'default' | 'success' | 'error' | 'warning';
 
@@ -32,6 +33,9 @@ const variantIcons: Record<ToastVariant, typeof Info> = {
   warning: AlertCircle,
 };
 
+const SWIPE_DISMISS_OFFSET = 80;
+const SWIPE_DISMISS_VELOCITY = 400;
+
 export function Toast({
   id,
   title,
@@ -41,7 +45,7 @@ export function Toast({
   onDismiss,
   action,
 }: ToastProps): JSX.Element {
-  const shouldReduceMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion();
   const Icon = variantIcons[variant];
 
   useEffect(() => {
@@ -56,17 +60,32 @@ export function Toast({
     };
   }, [duration, id, onDismiss]);
 
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo): void => {
+    if (!onDismiss) return;
+
+    const shouldDismiss =
+      info.offset.x > SWIPE_DISMISS_OFFSET || info.velocity.x > SWIPE_DISMISS_VELOCITY;
+
+    if (shouldDismiss) {
+      onDismiss(id);
+    }
+  };
+
   return (
     <motion.div
-      layout={!shouldReduceMotion}
+      layout={!prefersReducedMotion}
       role="status"
       aria-live="polite"
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={shouldReduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.98 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+      drag={prefersReducedMotion ? false : 'x'}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={{ left: 0.05, right: 0.35 }}
+      onDragEnd={handleDragEnd}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+      exit={prefersReducedMotion ? undefined : { opacity: 0, x: 120, scale: 0.96 }}
+      transition={motionTransition(prefersReducedMotion, springGentle)}
       className={cn(
-        'pointer-events-auto w-full max-w-sm rounded-lg border p-4 shadow-sm',
+        'pointer-events-auto w-full max-w-sm cursor-grab rounded-lg border p-4 shadow-sm active:cursor-grabbing',
         variantClasses[variant],
       )}
     >

@@ -18,7 +18,7 @@ export function Skeleton({
   return (
     <div
       aria-hidden="true"
-      className={cn('animate-pulse bg-muted', variantClasses[variant], className)}
+      className={cn('skeleton-shimmer', variantClasses[variant], className)}
     />
   );
 }

@@ -48,6 +48,7 @@ export function KanbanBoard({
   const { toast } = useToast();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeDragStatus, setActiveDragStatus] = useState<TaskStatus | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -98,10 +99,12 @@ export function KanbanBoard({
     }
     const task = columnTasks[status].find((item) => item.id === taskId) ?? null;
     setActiveTask(task);
+    setActiveDragStatus(status);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTask(null);
+    setActiveDragStatus(null);
 
     const { active, over } = event;
     if (!over) {
@@ -202,18 +205,21 @@ export function KanbanBoard({
               userMap={userMap}
               commentCountMap={commentCountMap}
               onOpenTask={onOpenTask}
+              activeDragStatus={activeDragStatus}
             />
           ))}
         </div>
 
-        <DragOverlay>
+        <DragOverlay dropAnimation={{ duration: 250, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1)' }}>
           {activeTask ? (
-            <div className="w-72 scale-[1.02] shadow-lg">
+            <div className="w-72">
               <TaskCard
                 task={activeTask}
-                columnStatus={activeTask.status}
+                columnStatus={activeDragStatus ?? activeTask.status}
                 assignee={userMap.get(activeTask.assigneeId)}
+                commentCount={commentCountMap?.get(activeTask.id) ?? 0}
                 onOpen={() => undefined}
+                isDragOverlay
               />
             </div>
           ) : null}
