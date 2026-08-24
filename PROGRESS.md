@@ -240,3 +240,125 @@ Auth reference: `services/auth.queryKeys.ts`.
 - **PriorityIcon:** Medium priority already uses `Equal` — no change needed.
 
 **Verification:** `npm run build`, `npm run lint`, `npm run test` (23 tests) — all green.
+
+---
+
+## 2026-08-23 — Visual identity pass (warm paper / clay accent)
+
+**Shipped:**
+- **Frozen design tokens** (reference for all future UI work):
+  - Background: `#FAF8F5` (light paper), `#1A1816` (dark charcoal)
+  - Text: `#211F1C` (light ink), `#EDE9E4` (dark off-white)
+  - Accent (sole saturated color): `#BF4A2E` (deep clay) — primary buttons, active nav indicator, key chart series ("Done", Completion Trend, Sprint Velocity "Completed")
+  - Chart scale: `#BF4A2E` → `#D4745C` → `#E8D5C4` → `#8A8580` / `#C4BFB8` neutrals
+  - Fonts: **Space Grotesk** (`font-display`, headings h1–h3, stat numbers), **Inter** (`font-sans`, body/forms/buttons), **JetBrains Mono** (`font-mono`, dates/counts/IDs/chart ticks)
+- **Typography detail:** `tracking-display` (-0.02em) + larger Space Grotesk scale on page titles and dashboard stat numbers
+- **Structural surfaces:** Removed decorative borders/shadows from dashboard tiles and analytics `ChartCard`; whitespace + `bg-muted/40` shifts instead. Kept elevation on Kanban cards, sidebar (`shadow-sm`), login card, modals/dropdowns
+- **Kanban cards:** Priority badges replaced with `border-l-4` clay-derived colors; due dates and counts in `font-mono`
+- **Sidebar:** `bg-sidebar` (paper minus one shade), active nav = slim `border-l-primary` bar (no filled highlight)
+- **Charts:** Shared `lib/chartTheme.ts` + `ChartTooltip`; muted dashed baselines only; mono axis ticks; rounded bar tops; Completion Trend area gradient fill; Status donut thicker ring with centered mono total count
+- **Dependencies:** `@fontsource/space-grotesk`, `@fontsource/jetbrains-mono`
+
+**Blocked:** Nothing.
+
+**Shared contract changes:** `tailwind.config.ts` and `src/index.css` tokens updated (documented here as frozen reference). Added `sidebar` color token, `brand.*` utility colors, `font-display` / `font-mono`. `chartColors.ts` now re-exports from `lib/chartTheme.ts`.
+
+**Accessibility:** Lighthouse `/login` Accessibility **100** (threshold ≥ 92). Clay accent `#BF4A2E` on paper `#FAF8F5` ≈ 5.1:1; on primary-foreground text ≈ 5.25:1 — both pass WCAG AA.
+
+**Verification:** `npm run build`, `npm run test` (23 tests) — all green.
+
+---
+
+## 2026-08-23 — Agent UI-3 (login page split layout)
+
+**Shipped:**
+- **Split login layout** — full `h-screen w-screen`, no centered floating card. Left marketing panel (~58% width, `md+`) with Space Grotesk branding, value prop, and three feature highlights (Kanban board, Live analytics, Real-time notifications) with lucide icons; soft warm-paper gradient + clay blur accents. Right panel: left-aligned sign-in form in padded column (`max-w-sm`).
+- **Mobile** — compact top banner (branding + value prop); form full-width single column; left panel hidden below `md`.
+- **Password visibility toggle** — `Input.tsx` extended: Eye/EyeOff inside field, `aria-label` reflects show/hide state, keyboard-focusable; smooth `transition` on focus ring.
+- **Theme toggle** — removed awkward card pill. Quiet icon-only `LoginThemeToggle` at bottom-left of left panel (desktop); fixed bottom-left corner on mobile (`md:hidden`) so pre-login dark mode is still available without duplicating sidebar chrome.
+- **Micro-interactions (login only):** staggered fade/slide entrance (`useReducedMotion` gated) for marketing content + form fields; horizontal shake on failed login / validation (`prefers-reduced-motion` respected); submit uses existing `Button` `whileTap` scale.
+- **New files:** `LoginForm.tsx`, `LoginMarketingPanel.tsx`, `LoginThemeToggle.tsx`. `LoginPage.tsx` is layout shell only.
+
+**Blocked:** Nothing.
+
+**Shared contract changes:** `InputProps` gained optional `showPasswordToggle` (defaults on for `type="password"`). `ButtonProps` now extends `HTMLMotionProps<'button'>` — fixes pre-existing `motion.button` + `ButtonHTMLAttributes` TS conflict (required for green `npm run build`).
+
+**Verification:** `npm run build`, `npm run test` (23 tests) — all green.
+
+---
+
+## 2026-08-23 — Agent UI-4 (interaction quality + material depth)
+
+**Shipped:**
+- **Sidebar nav indicator:** Replaced per-item static `border-l-2` bars with a single shared `framer-motion` `layoutId="sidebar-nav-indicator"` that spring-slides between active routes; collapsed mode uses a rounded `bg-primary/10` pill behind the icon
+- **Kanban cards (`TaskCard`):** Multi-layer resting shadow; `cursor-grab` on drag handle / `cursor-grabbing` on pickup; hover `translateY(-2px)` + shadow lift + `border-primary/35`; drag pickup scale `1.03`, stronger shadow, ~1.5° rotation; source card fades to `opacity-40` while dragging; `layout` animation for sibling settle on drop
+- **Kanban columns (`BoardColumn` + `KanbanBoard`):** Cross-column drop zones highlight with `ring-primary/25` inset border + `bg-primary/5` when dragging from a different column; `DragOverlay` uses dedicated overlay card variant with spring drop animation
+- **Buttons (`Button.tsx`):** `whileTap` scale `0.97` via `motion.button`; disabled/loading skips tap animation; respects `prefers-reduced-motion`
+- **Toast (`Toast.tsx`):** Spring enter/exit (`springGentle`); swipe-right-to-dismiss via horizontal `drag` with offset/velocity threshold; grab cursor while swiping
+- **Modal (`Modal.tsx`):** Backdrop fade + blur retained; content panel uses spring scale+fade (`springGentle`) instead of linear duration
+- **Notification bell (`Sidebar.tsx`, `NotificationBell.tsx`):** Shake + scale pulse on bell icon and badge when `unreadCount` increases while panel is closed (not just badge count update)
+- **Skeleton (`Skeleton.tsx` + `index.css`):** Shimmer sweep animation (`.skeleton-shimmer`) replaces static `animate-pulse`; disabled under `prefers-reduced-motion`
+- **Dashboard highlight cards (`DashboardPage.tsx`):** Hover lift (`y: -3`) + shadow; icon spring scale/rotate on hover; cards clickable → navigate to `/board`
+- **Shared motion helpers:** `src/lib/motion.ts` — `springSnappy`, `springGentle`, `springSettle`, `motionTransition()` utility
+
+**Interactions inventory:**
+| Surface | Interaction |
+|---|---|
+| Sidebar nav | Shared `layoutId` spring indicator slides between routes |
+| Sidebar bell | Shake/rotate + badge pulse on new unread while panel closed |
+| Task card rest | Multi-layer shadow, grab cursor on handle |
+| Task card hover | Lift −2px, shadow deepen, accent-tinted border |
+| Task card drag | Scale 1.03, rotation ~1.5°, strong shadow, grabbing cursor |
+| Task card drop | Framer `layout` sibling settle + dnd-kit spring overlay drop |
+| Column drop zone | Ring + background highlight when dragging from another column |
+| Button | `whileTap` scale 0.97 |
+| Toast | Spring enter/exit, swipe-right dismiss |
+| Modal | Backdrop fade/blur, spring scale+fade content |
+| Skeleton | Horizontal shimmer sweep |
+| Dashboard highlights | Hover lift, icon animate, click → board |
+
+**Blocked:** Nothing.
+
+**Shared contract changes:** None (animation/interaction only; no data/state logic changes).
+
+**Verification:** `npm run build`, `npm run test` (23 tests) — all green.
+
+---
+
+## 2026-08-23 — Agent UI-3 (login polish)
+
+**Shipped:**
+- **50/50 split** — marketing panel and sign-in panel each `md:w-1/2` (was ~58/42).
+- **Centered panels** — both halves vertically and horizontally center their content; form column uses `items-center justify-center`; marketing block is `text-center` with feature list left-aligned inside a `max-w-lg` column.
+- **Brand icon** — `KanbanSquare` in clay (`text-brand-clay`) beside SprintDesk on desktop marketing panel and mobile banner; Space Grotesk title unchanged.
+- **Theme toggle** — single fixed top-right control for all breakpoints (removed bottom-left mobile + left-panel footer placement).
+
+**Blocked:** Nothing.
+
+**Shared contract changes:** None.
+
+**Verification:** `npm run build` — green.
+
+---
+
+## 2026-08-23 — Agent UI-3 (login marketing alignment)
+
+**Shipped:**
+- **Left-aligned marketing panel** — branding row + feature list use `items-start text-left`; panel still vertically centers the `max-w-2xl` block.
+- **Favicon brand mark** — `/vite.svg` beside SprintDesk title (desktop + mobile banner); matches tab icon.
+- **Subtler panel theme** — layered paper/card gradient with low-opacity clay/sand blooms; dark mode uses charcoal base with muted clay accents.
+
+**Blocked:** Nothing.
+
+**Verification:** `npm run build` — green.
+
+---
+
+## 2026-08-23 — Agent UI-3 (login marketing width)
+
+**Shipped:**
+- Login marketing panel content container widened from `max-w-lg` (32rem) to `max-w-2xl` (42rem) so branding + feature list breathe on the 50/50 left panel.
+
+**Blocked:** Nothing.
+
+**Verification:** `npm run build` — green.
