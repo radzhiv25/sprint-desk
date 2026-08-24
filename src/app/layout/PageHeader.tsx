@@ -12,9 +12,11 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps): JSX.
   const user = useAuthStore((state) => state.user);
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-4 sm:px-6">
+    <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-background px-4 sm:px-6">
       <div className="flex min-w-0 flex-col justify-center gap-0.5">
-        <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h1>
+        <h1 className="truncate font-display text-2xl font-semibold tracking-display text-foreground sm:text-3xl">
+          {title}
+        </h1>
         {subtitle ? (
           <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
         ) : user ? (

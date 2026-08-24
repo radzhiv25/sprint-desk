@@ -5,7 +5,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -41,6 +43,17 @@ export default {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+        },
+        brand: {
+          clay: '#BF4A2E',
+          'clay-mid': '#D4745C',
+          sand: '#E8D5C4',
+          neutral: '#8A8580',
+          'neutral-light': '#C4BFB8',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -49,6 +62,9 @@ export default {
       },
       spacing: {
         18: '4.5rem',
+      },
+      letterSpacing: {
+        display: '-0.02em',
       },
     },
   },

@@ -6,10 +6,18 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   high: 'High',
 };
 
+/** Left-border accent for Kanban cards — derived from clay accent + warm neutrals. */
+export const PRIORITY_BORDER_COLORS: Record<Priority, string> = {
+  high: 'border-l-brand-clay',
+  medium: 'border-l-brand-clay-mid',
+  low: 'border-l-brand-neutral',
+};
+
+/** @deprecated Visual badge styles — Kanban cards now use border-l priority indicators. */
 export const PRIORITY_STYLES: Record<Priority, string> = {
   low: 'bg-secondary text-secondary-foreground',
-  medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
-  high: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
+  medium: 'bg-muted text-foreground',
+  high: 'bg-primary/10 text-primary',
 };
 
 export function formatDueDate(dueDate: string): string {

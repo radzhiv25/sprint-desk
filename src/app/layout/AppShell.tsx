@@ -24,7 +24,9 @@ export function AppShell(): JSX.Element {
         {isMobile ? (
           <div className="flex h-16 shrink-0 items-center border-b border-border px-3 md:hidden">
             <MobileMenuButton onClick={() => setMobileOpen(true)} />
-            <span className="ml-3 text-sm font-semibold text-foreground">SprintDesk</span>
+            <span className="ml-3 font-display text-sm font-semibold tracking-display text-foreground">
+              SprintDesk
+            </span>
           </div>
         ) : null}
 
