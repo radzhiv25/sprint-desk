@@ -2,13 +2,22 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 
-import { CHART_COLORS } from '@/features/analytics/chartColors';
+import { ChartLegend } from '@/features/analytics/ChartLegend';
+import { ChartTooltip } from '@/features/analytics/ChartTooltip';
+import {
+  BAR_RADIUS,
+  CHART_MARGINS,
+  getAxisTickProps,
+  getChartPalette,
+} from '@/lib/chartTheme';
+import { useThemeStore } from '@/store/themeStore';
 import type { SprintAnalyticsPoint } from '@/types';
 
 export interface SprintVelocityChartProps {
@@ -16,40 +25,31 @@ export interface SprintVelocityChartProps {
 }
 
 export function SprintVelocityChart({ data }: SprintVelocityChartProps): JSX.Element {
+  const theme = useThemeStore((state) => state.theme);
+  const palette = getChartPalette(theme);
+  const tickProps = getAxisTickProps(palette);
+
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart data={data} margin={CHART_MARGINS.default}>
+        <CartesianGrid vertical={false} stroke={palette.grid} strokeDasharray="4 6" />
         <XAxis
           dataKey="sprintName"
-          tick={{ fontSize: 12 }}
-          className="fill-muted-foreground"
+          tick={tickProps}
+          axisLine={false}
+          tickLine={false}
         />
-        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '0.5rem',
-            fontSize: '0.875rem',
-          }}
-          formatter={(value, name) => [
-            Number(value ?? 0),
-            name === 'completedTasks' ? 'Completed' : 'Total',
-          ]}
+        <YAxis
+          allowDecimals={false}
+          tick={tickProps}
+          axisLine={false}
+          tickLine={false}
+          width={32}
         />
-        <Bar
-          dataKey="completedTasks"
-          name="completedTasks"
-          fill={CHART_COLORS.velocity}
-          radius={[4, 4, 0, 0]}
-        />
-        <Bar
-          dataKey="totalTasks"
-          name="totalTasks"
-          fill={CHART_COLORS.backlog}
-          radius={[4, 4, 0, 0]}
-        />
+        <Tooltip content={<ChartTooltip palette={palette} />} />
+        <Bar dataKey="completedTasks" name="Completed" fill={palette.accent} radius={BAR_RADIUS} />
+        <Bar dataKey="totalTasks" name="Total" fill={palette.neutralLight} radius={BAR_RADIUS} />
+        <Legend verticalAlign="bottom" content={(props) => <ChartLegend payload={props.payload} />} />
       </BarChart>
     </ResponsiveContainer>
   );

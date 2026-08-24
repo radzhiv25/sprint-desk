@@ -12,7 +12,7 @@ function AnalyticsSkeleton(): JSX.Element {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="h-80 animate-pulse rounded-lg border bg-muted/40"
+          className="h-80 animate-pulse rounded-lg bg-muted/40"
           aria-hidden="true"
         />
       ))}
